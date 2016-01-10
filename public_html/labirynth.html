@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+            * {padding: 0; margin: 0;}
+            canvas {background-color: lightgray; display: block; margin: 0 auto;}
+        </style>
+    </head>
+    <body>
+        <div>TODO write content</div>
+        <canvas id="myCanvas" width="500" height="500"></canvas>
+        <script>
+            var canvas = document.getElementById("myCanvas");
+            var ctx = canvas.getContext("2d");
+            
+            
+            
+            //labirynth variables
+            var labirynthWallWidth = 20;
+            var labirynthPositionX = 0;
+            var labirynthPositionY = 0;
+            
+            //labirynth grid            
+            var labirynthGrid = [];
+
+            for(c = 0; c < canvas.width / labirynthWallWidth; c++)
+            {
+                labirynthGrid[c] = [];
+                for(r = 0; r < canvas.height / labirynthWallWidth; r++)
+                {
+                    labirynthGrid[c][r] = { path : false};
+                }
+            }
+            
+
+            //labirynth 1 path
+            //labirynthGrid[0][0].path = true;
+            labirynthGrid[1][0].path = true;
+            labirynthGrid[2][0].path = true;
+            labirynthGrid[3][0].path = true;
+            labirynthGrid[1][1].path = true;
+            labirynthGrid[2][1].path = true;
+            labirynthGrid[3][1].path = true;
+            labirynthGrid[3][2].path = true;
+            labirynthGrid[3][3].path = true;
+            labirynthGrid[3][4].path = true;
+            labirynthGrid[4][4].path = true;
+            
+            
+            //player variables
+            var playerPositionX = 60;
+            var playerPositionY = 60;
+            var lastPlayerPositionX = 0;
+            var lastPlayerPositionY = 0;
+            var playerWidth = 10;
+            var playerHeight = 10;
+            var playerMoveLength = 1;
+            
+            
+            //keyboard steering
+            var leftPressed = false;
+            var rightPressed = false;
+            var upPressed = false;
+            var downPressed = false;
+            
+
+            document.addEventListener("keydown", keyDownHandler, false);
+            document.addEventListener("keyup", keyUpHandler, false);
+            
+    
+            function keyDownHandler(e){
+                if(e.keyCode === 37)
+                {
+                    leftPressed = true;
+                };                
+        
+                if(e.keyCode === 39)
+                {
+                    rightPressed = true;
+                };
+                
+                if(e.keyCode === 38)
+                {
+                    upPressed = true;
+                };
+                
+                if(e.keyCode === 40)
+                {
+                    downPressed = true;
+                };
+            };
+            
+            function keyUpHandler(e){
+                if(e.keyCode === 37)
+                {
+                    leftPressed = false;
+                }                
+        
+                if(e.keyCode === 39)
+                {
+                    rightPressed = false;
+                }
+                
+                if(e.keyCode === 38)
+                {
+                    upPressed = false;
+                }
+                
+                if(e.keyCode === 40)
+                {
+                    downPressed = false;
+                }                
+            };
+            
+            
+            
+            function drawLabirynth() { 
+                for(c = 0; c < canvas.width / labirynthWallWidth; c++)
+                { 
+                    for(r = 0; r < canvas.height / labirynthWallWidth; r++)
+                    {
+                        if( labirynthGrid[c][r].path === false)
+                        {
+                            ctx.beginPath();
+                            ctx.rect(labirynthPositionX, labirynthPositionY, labirynthWallWidth, labirynthWallWidth);
+                            ctx.fillStyle = "red";
+                            ctx.fill();
+                            ctx.closePath();
+                        }
+                        labirynthPositionY += labirynthWallWidth;  
+                    }
+                    labirynthPositionY = 0;
+                    labirynthPositionX += labirynthWallWidth;                    
+                }   
+            };
+
+            function drawPlayer() {
+                //player draw and last position save for drawPlayer cleaning
+                lastPlayerPositionX = playerPositionX;
+                lastPlayerPositionY = playerPositionY;
+
+                ctx.beginPath();
+                ctx.rect(playerPositionX, playerPositionY, playerWidth, playerHeight);
+                ctx.fillStyle = "blue";
+                ctx.fill();
+                ctx.closePath();  
+            };
+                
+
+            function movePlayer() { 
+                //player move and border collision
+                
+                if(leftPressed && playerPositionX >= playerMoveLength)
+                {
+                    if(collisionPlayer("left"))
+                    {
+                        playerPositionX -= playerMoveLength;  
+                    }
+                }
+                
+                if(rightPressed && playerPositionX < canvas.width - playerWidth)
+                {
+                    if(collisionPlayer("right"))
+                    {
+                        playerPositionX += playerMoveLength; 
+                    }
+                }
+                
+                if(upPressed && playerPositionY)
+                {
+                    if(collisionPlayer("up"))
+                    {
+                        playerPositionY -= playerMoveLength;
+                    }
+                };
+                
+                if(downPressed && playerPositionY < canvas.height - playerHeight)
+                {
+                    if(collisionPlayer("down"))
+                    {
+                        playerPositionY += playerMoveLength;
+                    }
+                };
+                
+            };
+            
+            function collisionPlayer(direction) {
+                if(direction === "right")
+                {
+                    var edgeTest1 = labirynthGrid[testRight()][positionCheckY("up")].path;
+                    var edgeTest2 = labirynthGrid[testRight()][positionCheckY("down")].path;
+                    if(edgeTest1 && edgeTest2)
+                    {
+                        return true;
+                    }
+                }
+                
+                if(direction === "left")
+                {
+                    var edgeTest1 = labirynthGrid[testLeft()][positionCheckY("up")].path;
+                    var edgeTest2 = labirynthGrid[testLeft()][positionCheckY("down")].path;
+                    if(edgeTest1 && edgeTest2)
+                    {
+                        return true;
+                    }
+                }
+                
+                if(direction === "down")
+                {
+                    var edgeTest1 = labirynthGrid[positionCheckX("left")][testDown()].path;
+                    var edgeTest2 = labirynthGrid[positionCheckX("right")][testDown()].path;
+                    if(edgeTest1 && edgeTest2)
+                    {
+                        return true;
+                    }
+                }
+                
+                if(direction === "up")
+                {
+                    var edgeTest1 = labirynthGrid[positionCheckX("left")][testUp()].path;
+                    var edgeTest2 = labirynthGrid[positionCheckX("right")][testUp()].path;
+                    if(edgeTest1 && edgeTest2)
+                    {
+                        return true;
+                    }
+                }
+                
+                //setting position y for player up or down edge
+                function positionCheckY(upOrDown){
+                    if(upOrDown === "down"){
+                        var test1 = Math.floor((playerPositionY + playerHeight) / labirynthWallWidth - 1);
+                        var test2 = (playerPositionY + playerHeight) % labirynthWallWidth; 
+                    }
+
+                    if(upOrDown === "up")
+                    {
+                        var test1 = Math.floor(playerPositionY / labirynthWallWidth - 1);
+                        var test2 = playerPositionY % labirynthWallWidth +1;
+                    }
+                    
+                    if(test2 > 0)
+                    {
+                        test2 = 1;
+                    }
+                    return test1 + test2;
+                };
+                
+                //setting position x for player left or right edge
+                function positionCheckX(leftOrRight){
+                    if(leftOrRight === "left")
+                    {
+                        var test1 = Math.floor(playerPositionX / labirynthWallWidth - 1);
+                        var test2 = playerPositionX % labirynthWallWidth +1;
+                    }
+                    
+                    if(leftOrRight === "right"){
+                        var test1 = Math.floor((playerPositionX + playerWidth) / labirynthWallWidth - 1);
+                        var test2 = (playerPositionX + playerWidth) % labirynthWallWidth; 
+                    }
+                    
+                    if(test2 > 0)
+                    {
+                        test2 = 1;
+                    }
+                    return test1 + test2;
+                };
+                
+                //collision tests
+                function testRight(){
+                    var test1 = Math.floor((playerPositionX + playerWidth + playerMoveLength) / labirynthWallWidth) - 1;
+                    var test2 = (playerPositionX + playerWidth + playerMoveLength) % labirynthWallWidth;
+                    
+                    if(test2 > 0)
+                    {
+                        test2 = 1;
+                    }
+                    return test1 + test2;
+                };
+                
+                function testLeft(){
+                    var test1 = Math.floor((playerPositionX - playerMoveLength) / labirynthWallWidth);
+                    return test1;
+                }
+                
+                function testUp(){
+                    var test1 = Math.floor((playerPositionY - playerMoveLength) / labirynthWallWidth);
+                    return test1;
+                };
+                
+                function testDown(){
+                    var test1 = Math.floor((playerPositionY + playerHeight + playerMoveLength) / labirynthWallWidth) - 1;
+                    var test2 = (playerPositionY + playerHeight + playerMoveLength) % labirynthWallWidth;
+                    
+                    if(test2 > 0)
+                    {
+                        test2 = 1;
+                    }
+                    return test1 + test2;
+                };
+            };
+            
+            function draw() {
+                //ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                ctx.clearRect(lastPlayerPositionX, lastPlayerPositionY, playerWidth, playerHeight);
+                
+
+                drawLabirynth();
+
+                drawPlayer();
+                movePlayer();
+                requestAnimationFrame(draw);
+            };
+            
+            draw();
+    
+        </script>
+    </body>
+</html>
